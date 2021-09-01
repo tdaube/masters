@@ -1,0 +1,83 @@
+---
+title: "MY470 - Week 8 Assignment - R Programming"
+---
+
+### k-means clustering revisited
+
+In week 4, you learned how to programme a k-means clustering algorithms from scratch. The goal of this question is to replicate that exercise with R.
+
+a. First, read the data into R with the `read.csv` function.
+
+```{r}
+# Read in the data and remove the first two columns
+customers_data <- read.csv(file = "Wholesale customers data.csv", header = TRUE)
+customers_data <- customers_data[, -c(1:2)]
+```
+
+b. Write a function called `get_distance` that computes the Euclidean distance between two points in a multidimensional space.
+
+```{r}
+# Function to compute the Euclidean distance between two points
+get_distance <- function(x, y) {
+  distance <- sqrt(sum(x - y)^2)
+  return(distance)
+  }
+```
+
+c. Now write a function called `get_centroid` that computes the centroid of a group of points, where the centroid is defined as the average on each dimension.
+
+```{r}
+# Function to compute centroid of a group of points
+get_centroid <- function(ls) {
+  average <- rowMeans(as.data.frame(ls))
+  return(average)
+}
+```
+
+d. Finally, write a function called `kmeans` that implements the entire algorithm, including the two functions above. It should take two arguments: The data used to find the clusters and the desired number of clusters. When you wrote this function in Python, you ran it for 100 iterations. Here, we will use a standard stopping rule: We will assume the algorithm has converged (and thus you should stop the function) whenever the cluster assignments do not change from one iteration to the next. (If you are having convergence issues, you can increase this threshold to only 2-3 observations changing.)
+
+```{r}
+# Function to implement the k-means algorithm, taking the data and number of clusters as arguments
+# Function stops running when the cluster assignments don't change from one iteration to the next
+ kmeans <- function(points, k) { 
+  init <- points[sample(nrow(points), k), ]
+  centroids <- init
+  clusters <- vector("list", k)
+  distances <- vector("list", k)
+  
+  continue <- TRUE
+  while(continue) {
+    old_centroids <- centroids
+    for (p in 1:nrow(points)) {
+      for(c in 1:nrow(centroids)) {
+        distances[c] <- get_distance(customers_data[p,],centroids[c,])
+      }
+      clusters[p] <- which.min(distances)
+    }
+    for (i in 1:k) {
+      centroids[i,] <- get_centroid(customers_data[clusters == i,])
+    }
+    if(centroids == old_centroids) {
+      continue <- FALSE
+    }
+  }
+  return(centroids)
+ }
+```
+
+e. Test this algorithm with the data you read in earlier. Do you find the same results as when you run it with Python? What parts of the algorithm were more difficult to implement?
+
+```{r}
+# Test the k-means algorithm
+kmeans(customers_data, 3)
+```
+I found the results slightly different than when I ran it with Python. 
+Implementing the get_distance function within the while loop was more difficult.
+
+f. k-means clustering and related methods are sometimes used to find clusters in textual data: Textual documents are transformed into a numerical format such as a [document term matrix](https://en.wikipedia.org/wiki/Document-term_matrix). Rows in this matrix correspond to documents, columns to words, and the cells contain integer counts. Every row in this document term matrix is therefore a high dimensional vector (with as many elements as words/columns contained in the document term matrix) describing a single document through word counts. This makes it possible, after some normalisation, to use clustering algorithms to find clusters of similar row vectors, i.e. clusters of similar documents.
+
+Now imagine a research project that asked participants to submit short documents with current issues in society that they find most pressing. Afterwards, researchers run an algorithm like yours to find clusters among all submitted documents. Analysing these clusters they claim to have used AI to find "objective" topics/clusters of similar documents that were most important to people. Judging from your code, however, what are the main reasons why different researchers would likely end up with different clusters using the same dataset?
+
+Different researchers would likely end up with different clusters even if using the same dataset due to the random initialisation in the initial k centroids, and therefore will likely give different results each time it is run.  
+ 
+
