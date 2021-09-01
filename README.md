@@ -1,2 +1,2 @@
 # masters
-Collection of work from my master's programme
+Collection of work from my master's programme.
